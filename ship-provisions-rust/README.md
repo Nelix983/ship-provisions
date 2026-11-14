@@ -49,3 +49,18 @@ src/lib.rs         library: models, pdf, db, categories, checklist, reports
 src/main.rs        egui/eframe GUI (binary "ShipProvisions")
 tests/             parser (real sample PDFs), reports, checklist, end-to-end
 ```
+
+## Linux RPM package
+
+`packaging/build_rpm.py` builds a binary RPM (pure Python, no rpmbuild needed):
+
+```bash
+cargo build --release
+python3 packaging/build_rpm.py target/release/ShipProvisions dist/ship-provisions-1.0.0-1.x86_64.rpm
+sudo rpm -i dist/ship-provisions-1.0.0-1.x86_64.rpm     # or: sudo dnf install ./dist/...
+```
+
+The RPM installs `/usr/bin/ShipProvisions` and a desktop entry
+(`/usr/share/applications/ship-provisions.desktop`). CI builds it automatically on
+every push via `.github/workflows/build-linux-rpm.yml` (artifact `ShipProvisions-linux-rpm`,
+attached to Releases on `v*` tags). A prebuilt RPM is also committed under `dist/`.

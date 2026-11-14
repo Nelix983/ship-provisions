@@ -1,0 +1,48 @@
+name: Build Linux RPM
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+    paths:
+      - "ship-provisions-rust/**"
+  pull_request:
+    paths:
+      - "ship-provisions-rust/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ship-provisions-rust
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Package RPM
+        run: python3 packaging/build_rpm.py target/release/ShipProvisions dist/ship-provisions-1.0.0-1.x86_64.rpm
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShipProvisions-linux-rpm
+          path: ship-provisions-rust/dist/ship-provisions-1.0.0-1.x86_64.rpm
+          retention-days: 30
+
+      - name: Attach RPM to GitHub Release (on version tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" ship-provisions-rust/dist/ship-provisions-1.0.0-1.x86_64.rpm ^
+            --title "ShipProvisions (Linux RPM) $GITHUB_REF_NAME" ^
+            --notes "RPM package for Linux x86_64. Install with: sudo rpm -i ship-provisions-1.0.0-1.x86_64.rpm (or sudo dnf install ./...)"
