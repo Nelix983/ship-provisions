@@ -1,4 +1,5 @@
 //! Ship Provisions Tracker - egui desktop GUI (Windows .exe via cargo build --release).
+#![cfg_attr(windows, windows_subsystem = "windows")]
 
 use std::path::PathBuf;
 
