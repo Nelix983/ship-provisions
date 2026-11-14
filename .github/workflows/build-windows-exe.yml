@@ -1,0 +1,45 @@
+name: Build Windows exe
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build ShipProvisions.exe
+        run: pyinstaller ship_provisions.spec --noconfirm --clean
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShipProvisions-windows
+          path: dist/ShipProvisions.exe
+          retention-days: 30
+
+      - name: Attach exe to GitHub Release (on version tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/ShipProvisions.exe ^
+            --title "ShipProvisions $GITHUB_REF_NAME" ^
+            --notes "Windows executable. Download, copy to the ship's PC, double-click to run. No installation needed."
