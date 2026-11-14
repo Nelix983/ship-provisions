@@ -11,7 +11,7 @@ block_cipher = None
 hidden = collect_submodules("pdfplumber") + collect_submodules("openpyxl") + ["pymupdf"]
 
 a = Analysis(
-    ["src/ship_provisions/__main__.py"],
+    ["ship_provisions_app.py"],
     pathex=["src"],
     binaries=[],
     datas=[],

@@ -1,0 +1,54 @@
+name: Build Windows exe (Rust)
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ship-provisions-rust
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ship-provisions-rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('ship-provisions-rust/Cargo.lock') }}
+
+      - name: Run tests
+        working-directory: ship-provisions-rust
+        run: cargo test --release
+
+      - name: Build ShipProvisions.exe
+        working-directory: ship-provisions-rust
+        run: cargo build --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ShipProvisions-windows-rust
+          path: ship-provisions-rust/target/release/ShipProvisions.exe
+          retention-days: 30
+
+      - name: Attach exe to GitHub Release (on version tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" ship-provisions-rust/target/release/ShipProvisions.exe ^
+            --title "ShipProvisions (Rust) $GITHUB_REF_NAME" ^
+            --notes "Windows executable (Rust build). Download, copy to the ship's PC, double-click to run. No installation needed."
