@@ -1,0 +1,5 @@
+pdfplumber>=0.11
+openpyxl>=3.1
+PyMuPDF>=1.24
+# Optional, only needed for scanned (image-only) PDFs:
+# pytesseract>=0.3  (also requires the Tesseract OCR binary installed on Windows)
